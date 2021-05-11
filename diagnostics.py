@@ -1,6 +1,8 @@
 import subprocess
 
 SERVICES = {
+    'icmp': None,
+    'bmc':  80,
     'ssh/sftp': 22,
     'vnc': 5900,
 }

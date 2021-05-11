@@ -1,5 +1,6 @@
-from diagnostics import ping
+from settings.gui_settings import UP_COLOR, DOWN_COLOR
 from diagnostics import poll
+from diagnostics import ping
 from diagnostics import SERVICES
 
 
@@ -9,15 +10,30 @@ class Server:
         for k, v in kwargs.items():
             self.__setattr__(k, v)
 
-        self.status = None
-        self.bcm_status = None
         self.services = {}
         for service in SERVICES:
             self.services[service] = None
 
     def update(self):
-        self.status = ping(self.ipv4)
-        self.bcm_status = ping(self.bmc_ipv4)
 
+        address = None
         for service in self.services.keys():
-            self.services[service] = poll(self.ipv4, SERVICES[service])
+            if 'bmc' in service:
+                address = self.bmc_ipv4
+            else:
+                address = self.ipv4
+
+            result = None
+            if service == 'icmp':
+                result = ping(address)
+            else:
+                result = poll(address, SERVICES[service])
+
+            if result:
+                self.services[service] = f'{service}: UP'
+            else:
+                self.services[service] = f'{service}: DOWN'
+            if hasattr(self, 'gui'):
+                self.gui.update_label(service, 'textvariable', self.services[service])
+                self.gui.update_label(service, 'bg', UP_COLOR if 'UP' in self.services[service] else DOWN_COLOR)
+                self.gui.master.update()
